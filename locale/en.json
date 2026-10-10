@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Dictation hotkey",
+    "description": "Hold a key combination to dictate: the page records, DSH's own speech engine transcribes, and the text lands in the composer."
+  }
+}

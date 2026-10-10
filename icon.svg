@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Dictation hotkey">
+  <rect x="2.5" y="6.5" width="19" height="11" rx="2.5" />
+  <path d="M6 10.5h3.2M6 13.5h5.4" />
+  <path d="M14.6 10.2a2.3 2.3 0 0 1 4.6 0v2.1a2.3 2.3 0 0 1-4.6 0z" />
+  <path d="M13.6 12.6a3.3 3.3 0 0 0 6.6 0M16.9 15.9V18" />
+</svg>
