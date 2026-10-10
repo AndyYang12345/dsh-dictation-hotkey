@@ -1,0 +1,50 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install build tooling
+        run: npm install --no-audit --no-fund
+
+      - name: Syntax checks
+        run: |
+          node --check host/index.js
+          node --check build.mjs
+          node --check verify.mjs
+          node --check test-release.mjs
+
+      - name: Build client bundle
+        run: npm run build
+
+      - name: Manifest contract
+        run: |
+          node -e "
+            const p = require('./package.json');
+            if (!p.dsh || !p.dsh.bundle || !p.dsh.bundle.patch) throw new Error('missing dsh.bundle.patch');
+            if (!p.dsh.client || p.dsh.client.platform !== 'web') throw new Error('missing dsh.client web declaration');
+            if (!p.exports['./client']) throw new Error('missing ./client export');
+            if (!p.exports['./package.json']) throw new Error('missing ./package.json export');
+            if (p.private === true) throw new Error('manifest must be publishable');
+            console.log('manifest OK');
+          "
+          test -s cordis.patch.yml
+          test -s client/dist/client.js
+          grep -q '__ModuleLoader__.load' client/dist/client.js
+
+      - name: Bundle contract (declared services only)
+        run: npm run verify
+
+      - name: Behaviour suite (fake microphone + recognizer)
+        run: npm test
