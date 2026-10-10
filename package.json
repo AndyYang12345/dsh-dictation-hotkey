@@ -1,0 +1,71 @@
+{
+  "name": "dsh-dictation-hotkey",
+  "version": "0.2.0",
+  "description": "Press-to-talk dictation: a key combination records in the DSH Web page, DSH's own speech engine transcribes, and the text lands in the composer.",
+  "license": "MIT",
+  "type": "module",
+  "main": "host/index.js",
+  "exports": {
+    ".": "./host/index.js",
+    "./client": {
+      "default": "./client/dist/client.js"
+    },
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "host",
+    "client/dist",
+    "cordis.patch.yml",
+    "locale",
+    "icon.svg",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "dsh": {
+    "manifestVersion": 1,
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": false
+    }
+  },
+  "engines": {
+    "node": "^22.19.0 || >=24.0.0"
+  },
+  "scripts": {
+    "build": "node build.mjs",
+    "verify": "node verify.mjs",
+    "test": "node test-release.mjs"
+  },
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "dictation",
+    "speech-to-text",
+    "push-to-talk",
+    "voice-input",
+    "sensevoice",
+    "web-ui"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AndyYang12345/dsh-dictation-hotkey.git"
+  },
+  "bugs": {
+    "url": "https://github.com/AndyYang12345/dsh-dictation-hotkey/issues"
+  },
+  "homepage": "https://github.com/AndyYang12345/dsh-dictation-hotkey#readme",
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.4",
+    "@deepseek-ai/dsh-experimental-speech-to-text": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-experimental-api-speech-to-text": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-client-ui-conversation": "0.2.0-rc.2"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0"
+  }
+}

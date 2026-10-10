@@ -1,0 +1,15 @@
+# dsh-dictation-hotkey bundle layer.
+#
+# One row: this package's own plugin. The host half carries the default
+# settings (§config) and exposes them over the loopback Connection RPC
+# channel `/dictation-hotkey` for the browser half; the browser half ships
+# through package.json `dsh.client`.
+#
+# Defaults may be pinned here, e.g.
+#   - id: dictation-hotkey
+#     name: dsh-dictation-hotkey
+#     config:
+#       hotkey: Ctrl+Shift+Space
+- insert:
+    - id: dictation-hotkey
+      name: dsh-dictation-hotkey

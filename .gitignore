@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+
+# Local configuration / secrets — never commit an npm token
+.npmrc
+
+# Build output kept? No: the bundle is committed on purpose so `dsh plugin add`
+# works straight from a git checkout, exactly like the shipped bundles do.
+# (leave client/dist/ tracked)
+
+# Editor / OS noise
+.idea/
+.vscode/
+*.log
+.DS_Store
+
+# Scratch
+/tmp/
+*.tgz
