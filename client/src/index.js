@@ -23,7 +23,8 @@
  */
 
 import { Controller } from './controller.js'
-import { DictationSeat } from './ui.js'
+import { DictationSeat, HomeSeat } from './ui.js'
+import { settings, record } from './settings.js'
 
 export const name = 'dictation-hotkey'
 
@@ -45,6 +46,17 @@ export const inject = ['slots', 'remote.speech']
  * @param ctx - client root context (carries the declared services).
  */
 export function apply(ctx) {
+  // Activation diary, kept only while the diagnostics toggle is on: it records
+  // which slot declarations arrived and which seats mounted, which is how
+  // "the hotkey does nothing on the new-conversation screen" became a fact
+  // instead of a guess.
+  const diary = (...entry) => {
+    if (settings().debug !== true) return
+    const log = (window.__DSH_PTT_DIARY__ ??= [])
+    log.push(entry.join(' '))
+    if (log.length > 40) log.shift()
+    record({ event: 'diary', detail: entry.join(' ') })
+  }
   // `remote` is deliberately NOT injected: only the dotted `remote.speech`
   // service is, so the plain service is looked up defensively and never cached.
   const controller = new Controller(
@@ -68,10 +80,26 @@ export function apply(ctx) {
     }
   }, 'dictation-hotkey: push-to-talk listeners')
 
-  ctx.slots.inject('conversation.composer.dock', () =>
-    ctx.slots.register(
+  // Inside a session: the pill, seated in the composer dock, which hands this
+  // component that session's inputActions.
+  ctx.slots.inject('conversation.composer.dock', () => {
+    diary('dock declared')
+    return ctx.slots.register(
       { name: 'conversation.composer.dock', id: 'dictation-hotkey', order: 90 },
       DictationSeat,
-    ),
-  )
+    )
+  })
+
+  // Without a session (the new-conversation screen) the dock never renders, so
+  // the hotkey would have no seat at all. `shell.overlay` is a root-scope list
+  // slot that renders in both states and already carries ten official
+  // components; this headless entry keeps the controller armed and routes the
+  // transcript into the focused composer.
+  ctx.slots.inject('shell.overlay', () => {
+    diary('overlay declared')
+    return ctx.slots.register(
+      { name: 'shell.overlay', id: 'dictation-hotkey-home', order: 95 },
+      HomeSeat,
+    )
+  })
 }

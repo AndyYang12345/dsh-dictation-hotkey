@@ -28,6 +28,9 @@ hold Ctrl+Shift+Space ──▶ speak ──▶ release
   `inputActions.insertText`, so the caret, references, and attachments survive.
 - **Configurable per browser**: hotkey, mode, send behaviour, beeps, and
   diagnostics live in a popover on the composer pill (`localStorage`).
+- **Works on the new-conversation screen too**: with no session open there is no
+  composer draft to splice into, so the transcript is pasted into the focused
+  composer as a normal edit, and the pill returns with the first session.
 - **Diagnosable**: optional per-keystroke log with audio level, audio length, and
   inference time, which separates "nothing was picked up" from "the recognizer
   missed it".
@@ -63,6 +66,11 @@ A **🎙 Dictation** pill appears under the composer:
 
 Releasing **any** key of the combination ends the recording, so there is no need
 to lift them together.
+
+On the home screen (no session yet) the pill is absent — the composer dock only
+exists inside a session — but the hotkey still works: the controller stays armed
+through a root-scope seat and the transcript is pasted into the focused composer.
+Auto-send is skipped there, so sending stays your own keystroke.
 
 ## Settings
 
@@ -119,6 +127,7 @@ order, double taps, sub-threshold presses, empty transcripts, and auto-send.
 |---|---|
 | Hotkey, microphone, WAV encoding, state | `client/src/{index,controller,hotkey,audio,settings,ui}.js` |
 | Composer seat (session-scoped) | `conversation.composer.dock` slot |
+| Session-less seat | headless component in the root-scope `shell.overlay` slot |
 | Recognition | `ctx.remote.speech.transcribe` — official speech Remote |
 | Host half | `host/index.js`, intentionally a no-op (`apply() {}`) |
 | Bundle layer | `cordis.patch.yml` inserts the plugin row |

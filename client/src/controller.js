@@ -55,9 +55,21 @@ class Controller {
     }
   }
 
-  /** The most recently mounted session seat is the one the composer shows. */
+  /**
+   * The seat that should receive the transcript: the most recently mounted one
+   * that can accept text. A session seat outranks the home-screen bridge, which
+   * keeps working without any session at all.
+   */
   active() {
+    for (let i = this.seats.length - 1; i >= 0; i -= 1) {
+      if (this.seats[i].mode !== 'active-element') return this.seats[i]
+    }
     return this.seats.length === 0 ? null : this.seats[this.seats.length - 1]
+  }
+
+  /** True when the only seat is the session-less bridge. */
+  sessionless() {
+    return this.seats.length > 0 && this.seats.every((seat) => seat.mode === 'active-element')
   }
 
   subscribe(listener) {
@@ -286,14 +298,23 @@ class Controller {
         return
       }
       const target = this.active() ?? seat
-      if (target.actions.insertText(text, span) === false) {
+      if (target.mode === 'active-element') {
+        // No session yet: the transcript goes into whatever composer has focus,
+        // and sending stays the user's keystroke, exactly as before.
+        if (target.actions.insertText(text) === false) {
+          record({ event: 'insert-failed', reason: 'no focused composer', chars: text.length })
+          this.fail('没有找到可写入的输入框，请先点开一个会话')
+          return
+        }
+      } else if (target.actions.insertText(text, span) === false) {
         if (target.actions.insertText(text, target.actions.captureInsertion()) === false) {
           record({ event: 'insert-conflict', chars: text.length })
           this.fail('输入框已被改动，文字未插入')
           return
         }
+      } else if (config.autoSend) {
+        target.actions.submit()
       }
-      if (config.autoSend) target.actions.submit()
       record({
         event: 'ok',
         heldMs: Math.round(held),

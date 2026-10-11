@@ -423,9 +423,20 @@ var Controller = class {
       if (index >= 0) this.seats.splice(index, 1);
     };
   }
-  /** The most recently mounted session seat is the one the composer shows. */
+  /**
+   * The seat that should receive the transcript: the most recently mounted one
+   * that can accept text. A session seat outranks the home-screen bridge, which
+   * keeps working without any session at all.
+   */
   active() {
+    for (let i = this.seats.length - 1; i >= 0; i -= 1) {
+      if (this.seats[i].mode !== "active-element") return this.seats[i];
+    }
     return this.seats.length === 0 ? null : this.seats[this.seats.length - 1];
+  }
+  /** True when the only seat is the session-less bridge. */
+  sessionless() {
+    return this.seats.length > 0 && this.seats.every((seat) => seat.mode === "active-element");
   }
   subscribe(listener) {
     this.listeners.add(listener);
@@ -631,14 +642,21 @@ var Controller = class {
         return;
       }
       const target = this.active() ?? seat;
-      if (target.actions.insertText(text, span) === false) {
+      if (target.mode === "active-element") {
+        if (target.actions.insertText(text) === false) {
+          record({ event: "insert-failed", reason: "no focused composer", chars: text.length });
+          this.fail("\u6CA1\u6709\u627E\u5230\u53EF\u5199\u5165\u7684\u8F93\u5165\u6846\uFF0C\u8BF7\u5148\u70B9\u5F00\u4E00\u4E2A\u4F1A\u8BDD");
+          return;
+        }
+      } else if (target.actions.insertText(text, span) === false) {
         if (target.actions.insertText(text, target.actions.captureInsertion()) === false) {
           record({ event: "insert-conflict", chars: text.length });
           this.fail("\u8F93\u5165\u6846\u5DF2\u88AB\u6539\u52A8\uFF0C\u6587\u5B57\u672A\u63D2\u5165");
           return;
         }
+      } else if (config.autoSend) {
+        target.actions.submit();
       }
-      if (config.autoSend) target.actions.submit();
       record({
         event: "ok",
         heldMs: Math.round(held),
@@ -894,11 +912,48 @@ function DictationSeat(props) {
     h(StatusPill, { controller: window.__DSH_PTT_CONTROLLER__ })
   );
 }
+function HomeSeat() {
+  REACT.useEffect(() => {
+    if (window.__DSH_PTT_DIARY__ !== void 0) window.__DSH_PTT_DIARY__.push("home seat mounted");
+    const seat = {
+      mode: "active-element",
+      locked: false,
+      actions: {
+        captureInsertion: () => ({}),
+        insertText: (text) => insertIntoFocusedComposer(text),
+        submit: () => false
+      }
+    };
+    return window.__DSH_PTT_CONTROLLER__.addSeat(seat);
+  }, []);
+  return null;
+}
+function insertIntoFocusedComposer(text) {
+  const element = document.activeElement !== null && typeof document.activeElement.matches === "function" && document.activeElement.matches('[contenteditable="true"]') ? document.activeElement : document.querySelector('[contenteditable="true"]');
+  if (element === null || element === void 0) return false;
+  element.focus();
+  try {
+    const data = new DataTransfer();
+    data.setData("text/plain", text);
+    return element.dispatchEvent(
+      new ClipboardEvent("paste", { clipboardData: data, bubbles: true, cancelable: true })
+    );
+  } catch {
+    return false;
+  }
+}
 
 // client/src/index.js
 var name = "dictation-hotkey";
 var inject = ["slots", "remote.speech"];
 function apply(ctx) {
+  const diary = (...entry) => {
+    if (settings().debug !== true) return;
+    const log = window.__DSH_PTT_DIARY__ ??= [];
+    log.push(entry.join(" "));
+    if (log.length > 40) log.shift();
+    record({ event: "diary", detail: entry.join(" ") });
+  };
   const controller = new Controller(
     () => {
       try {
@@ -919,12 +974,19 @@ function apply(ctx) {
       }
     };
   }, "dictation-hotkey: push-to-talk listeners");
-  ctx.slots.inject(
-    "conversation.composer.dock",
-    () => ctx.slots.register(
+  ctx.slots.inject("conversation.composer.dock", () => {
+    diary("dock declared");
+    return ctx.slots.register(
       { name: "conversation.composer.dock", id: "dictation-hotkey", order: 90 },
       DictationSeat
-    )
-  );
+    );
+  });
+  ctx.slots.inject("shell.overlay", () => {
+    diary("overlay declared");
+    return ctx.slots.register(
+      { name: "shell.overlay", id: "dictation-hotkey-home", order: 95 },
+      HomeSeat
+    );
+  });
 }
 return module.exports; } });

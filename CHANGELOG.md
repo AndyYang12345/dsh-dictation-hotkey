@@ -4,6 +4,21 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2026-10-12
+
+### Added
+
+- Dictation works on the new-conversation screen: with no session the composer
+  dock never renders, so a headless seat in the root-scope `shell.overlay` slot
+  keeps the controller armed and the transcript is pasted into the focused
+  composer as a normal edit (auto-send is skipped there).
+- An activation diary (diagnostics toggle) records which slot declarations
+  arrived and which seats mounted, which is how the session-less miss was
+  pinned down.
+- `test-release.mjs` gained a home-screen scenario asserting that the bridge
+  seat registers, the take transcribes without a session, and the transcript
+  reaches the focused composer.
+
 ## [0.2.0] - 2026-10-11
 
 First public release.

@@ -256,4 +256,58 @@ function DictationSeat(props) {
   )
 }
 
-export { StatusPill, SettingsPopover, Styles, DictationSeat }
+/**
+ * Home-screen seat. The composer dock only renders inside a session, so on the
+ * new-conversation screen `seats` would stay empty and the hotkey would do
+ * nothing. `shell.overlay` is a root-scope list slot that renders in both states
+ * (the official UI already seats ten components there), so this component keeps
+ * the controller armed and inserts into the focused composer element instead of
+ * a session draft.
+ */
+function HomeSeat() {
+  REACT.useEffect(() => {
+    if (window.__DSH_PTT_DIARY__ !== undefined) window.__DSH_PTT_DIARY__.push('home seat mounted')
+    const seat = {
+      mode: 'active-element',
+      locked: false,
+      actions: {
+        captureInsertion: () => ({}),
+        insertText: (text) => insertIntoFocusedComposer(text),
+        submit: () => false,
+      },
+    }
+    return window.__DSH_PTT_CONTROLLER__.addSeat(seat)
+  }, [])
+  return null
+}
+
+/**
+ * Put text into the composer that currently has focus, for the session-less
+ * home screen where no session draft exists yet.
+ *
+ * A synthetic paste is used because the composer is a rich editor: it observes
+ * the paste pipeline, so the text becomes a normal user edit and the draft is
+ * created exactly as if it had been typed. Returns false when no editable is
+ * focused, and the caller then reports it instead of failing silently.
+ */
+function insertIntoFocusedComposer(text) {
+  const element =
+    document.activeElement !== null &&
+    typeof document.activeElement.matches === 'function' &&
+    document.activeElement.matches('[contenteditable="true"]')
+      ? document.activeElement
+      : document.querySelector('[contenteditable="true"]')
+  if (element === null || element === undefined) return false
+  element.focus()
+  try {
+    const data = new DataTransfer()
+    data.setData('text/plain', text)
+    return element.dispatchEvent(
+      new ClipboardEvent('paste', { clipboardData: data, bubbles: true, cancelable: true }),
+    )
+  } catch {
+    return false
+  }
+}
+
+export { StatusPill, SettingsPopover, Styles, DictationSeat, HomeSeat, insertIntoFocusedComposer }

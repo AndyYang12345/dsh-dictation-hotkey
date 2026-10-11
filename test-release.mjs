@@ -87,13 +87,42 @@ function loadBundle() {
     setTimeout: (handler, ms) => setTimeout(handler, ms),
     clearTimeout,
   }
+  /** Minimal composer element that records the paste the plugin dispatches. */
+  const composer = {
+    pasted: [],
+    className: 'composer',
+    matches: (selector) => selector === '[contenteditable="true"]',
+    focus() {},
+    dispatchEvent(event) {
+      if (event.type === 'paste') {
+        this.pasted.push(event.clipboardData.getData('text/plain'))
+        return true
+      }
+      return true
+    },
+  }
   const doc = {
     hidden: false,
+    activeElement: composer,
     addEventListener: (type, handler) => listeners[type]?.push(handler),
     removeEventListener: () => {},
     getElementById: () => null,
+    querySelector: (selector) => (selector === '[contenteditable="true"]' ? composer : null),
     createElement: () => ({ style: {}, append() {}, set textContent(_value) {} }),
     head: { append() {} },
+  }
+  globalThis.ClipboardEvent = class ClipboardEvent {
+    constructor(type, init = {}) {
+      this.type = type
+      this.clipboardData = init.clipboardData
+      this.bubbles = init.bubbles
+      this.cancelable = init.cancelable
+    }
+  }
+  globalThis.DataTransfer = class DataTransfer {
+    constructor() { this.data = new Map() }
+    setData(type, value) { this.data.set(type, value) }
+    getData(type) { return this.data.get(type) ?? '' }
   }
 
   globalThis.window = win
@@ -124,13 +153,17 @@ function loadBundle() {
     if (name === 'react') return react
     throw new Error(`unexpected external: ${name}`)
   })
-  return { module: module_, listeners, win, feedAudio }
+  return { module: module_, listeners, win, feedAudio, composer }
 }
 
-/** Mount the plugin against a stub ctx and return handles for driving it. */
-function mount({ transcribe }) {
+/**
+ * Mount the plugin against a stub ctx and return handles for driving it.
+ * @param options.session - false simulates the session-less home screen: the
+ *   composer dock never renders, so only the shell.overlay bridge seat exists.
+ */
+function mount({ transcribe, session = true }) {
   const loaded = loadBundle()
-  const calls = { transcribe: 0, insert: 0, submit: 0, texts: [] }
+  const calls = { transcribe: 0, insert: 0, submit: 0, texts: [], slots: [] }
   const speech = {
     transcribe: async (request) => {
       calls.transcribe += 1
@@ -150,31 +183,69 @@ function mount({ transcribe }) {
     },
     slots: {
       inject: (target, callback) => callback(),
-      register: () => () => {},
+      register: (definition, component) => {
+        calls.slots.push(definition.name)
+        // Only the session composer renders its seat; the root-scope bridge
+        // renders in both states.
+        const renders = definition.name === 'shell.overlay' || session
+        if (renders && typeof component === 'function') {
+          try {
+            component({ inputActions: null, locked: false })
+          } catch {
+            /* the stub React does not run effects; handled below */
+          }
+        }
+        return () => {}
+      },
     },
   }
   loaded.module.apply(ctx)
   const controller = loaded.win.__DSH_PTT_CONTROLLER__
-  controller.addSeat({
-    actions: {
-      captureInsertion: () => ({ rev: 1 }),
-      insertText: (text) => {
-        calls.insert += 1
-        calls.texts.push(text)
-        return true
+  if (session) {
+    controller.addSeat({
+      actions: {
+        captureInsertion: () => ({ rev: 1 }),
+        insertText: (text) => {
+          calls.insert += 1
+          calls.texts.push(text)
+          return true
+        },
+        submit: () => {
+          calls.submit += 1
+        },
       },
-      submit: () => {
-        calls.submit += 1
+      locked: false,
+    })
+  } else {
+    // The bridge seat registers itself from the component's effect; the stub
+    // React does not run effects, so seat it exactly as HomeSeat would.
+    controller.addSeat({
+      mode: 'active-element',
+      locked: false,
+      actions: {
+        captureInsertion: () => ({}),
+        insertText: (text) => {
+          calls.insert += 1
+          calls.texts.push(text)
+          const element = loaded.composer
+          element.focus()
+          const data = new globalThis.DataTransfer()
+          data.setData('text/plain', text)
+          return element.dispatchEvent(
+            new globalThis.ClipboardEvent('paste', { dataTransfer: data, clipboardData: data, bubbles: true, cancelable: true }),
+          )
+        },
+        submit: () => false,
       },
-    },
-    locked: false,
-  })
+    })
+  }
   return {
     controller,
     calls,
     listeners: loaded.listeners,
     storage: loaded.win.localStorage,
     feedAudio: loaded.feedAudio,
+    composer: loaded.composer,
   }
 }
 
@@ -288,6 +359,24 @@ await scenario('autoSend submits the draft', async () => {
   await sleep(900)
   check('text inserted', calls.insert === 1, `n=${calls.insert}`)
   check('submit was called once', calls.submit === 1, `n=${calls.submit}`)
+})
+
+// ── 6. new-conversation screen: no session, bridge seat only ─────────────
+await scenario('home screen without a session (new conversation)', async () => {
+  const { controller, calls, listeners, feedAudio, composer } = mount({
+    transcribe: async () => ({ ok: true, value: { text: '新会话第一句' } }),
+    session: false,
+  })
+  check('the bridge seat is registered', calls.slots.includes('shell.overlay'), JSON.stringify(calls.slots))
+  check('no session seat exists', controller.sessionless(), `seats=${controller.seats.length}`)
+  listeners.keydown.forEach((handler) => handler(hotkeyDown()))
+  await sleep(400)
+  feedAudio(0.4)
+  listeners.keyup.forEach((handler) => handler(key('Space', combo)))
+  await sleep(900)
+  check('transcription happened without a session', calls.transcribe === 1, `n=${calls.transcribe}`)
+  check('transcript reached the focused composer', composer.pasted[0] === '新会话第一句', JSON.stringify(composer.pasted))
+  check('nothing was auto-submitted', calls.submit === 0, `n=${calls.submit}`)
 })
 
 console.log('')
