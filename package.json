@@ -1,6 +1,6 @@
 {
   "name": "dsh-dictation-hotkey",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Press-to-talk dictation: a key combination records in the DSH Web page, DSH's own speech engine transcribes, and the text lands in the composer.",
   "license": "MIT",
   "type": "module",

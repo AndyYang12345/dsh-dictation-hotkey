@@ -4,7 +4,16 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.2.1] - 2026-10-12
+## [0.3.0] - 2026-10-13
+
+First published release.
+
+- Same code as the 0.2.x line: push-to-talk dictation in the Web composer via
+  DSH's own speech Remote, working inside a session and on the
+  new-conversation screen.
+- 0.0.0-stage, 0.2.2, 0.2.3 and 0.2.4 are superseded; install `0.3.0`.
+
+### [0.2.1] - 2026-10-12
 
 ### Added
 
