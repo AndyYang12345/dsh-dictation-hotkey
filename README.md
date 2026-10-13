@@ -48,12 +48,17 @@ hold Ctrl+Shift+Space ──▶ speak ──▶ release
 # from a checkout
 dsh plugin --profile web add /path/to/dsh-dictation-hotkey
 
-# or straight from git
+# or straight from git (no clone, no build: the bundle is committed)
 dsh plugin --profile web add github:AndyYang12345/dsh-dictation-hotkey
 ```
 
 Then reload the Web UI. The bundle is committed at `client/dist/client.js`, so a
 checkout works without a build step.
+
+Updating later: `dsh plugin --profile web add github:AndyYang12345/dsh-dictation-hotkey`
+again and restart `dsh web` — a profile keeps its own copy of the installed
+package, so pushing to GitHub does not update an already-installed profile by
+itself.
 
 ## Use
 

@@ -34,11 +34,15 @@
 # 从本地目录
 dsh plugin --profile web add /path/to/dsh-dictation-hotkey
 
-# 或直接从 git 安装
+# 或直接从 git 安装（不用 clone、不用构建：产物已提交）
 dsh plugin --profile web add github:AndyYang12345/dsh-dictation-hotkey
 ```
 
 然后刷新 Web 页面。构建产物 `client/dist/client.js` 已随仓库提交，直接 checkout 也能用，无需构建。
+
+以后更新：再执行一次
+`dsh plugin --profile web add github:AndyYang12345/dsh-dictation-hotkey`，然后重启 `dsh web`。
+profile 会保存已安装包的一份副本，所以只往 GitHub 推送并不会自动更新已安装的 profile。
 
 ## 使用
 
