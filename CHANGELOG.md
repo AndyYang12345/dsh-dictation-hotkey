@@ -4,6 +4,24 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2026-11-21
+
+Compatibility with DSH `0.2.2-rc.5`.
+
+- Declare `engines.dsh: >=0.2.0-rc.2 <0.3.0`. Since DSH 0.2.1-alpha.3 an own
+  `engines.dsh` decides compatibility alone and the `@deepseek-ai/dsh-*` peer
+  ranges are ignored. Before this release the exact peer pins
+  (`0.2.0-rc.2`) made DSH skip the whole bundle on startup:
+  `skipping profile bundle "dsh-dictation-hotkey": ... incompatible with dsh
+  0.2.2-rc.5`.
+- Peer ranges follow the same 0.2.x window and `@deepseek-ai/cordis` follows the
+  runtime (`~4.1.0`).
+- No client change: `remote.speech.transcribe`, `slots.inject`/`register`,
+  `inputActions.captureInsertion`/`insertText`/`submit`, the
+  `conversation.composer.dock` session slot and the root-scope `shell.overlay`
+  seat (now declared by `dsh-client-ui-layout`) are unchanged in 0.2.2-rc.5, and
+  the contract check plus the behaviour suite still pass against them.
+
 ## [0.3.0] - 2026-10-13
 
 First published release.

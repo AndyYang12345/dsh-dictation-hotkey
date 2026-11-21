@@ -37,7 +37,8 @@ hold Ctrl+Shift+Space ──▶ speak ──▶ release
 
 ## Requirements
 
-- DSH `0.2.0-rc.2` or a compatible release, Web profile.
+- DSH `0.2.x` (declared as `engines.dsh: >=0.2.0-rc.2 <0.3.0`; 0.3 and 0.1 are refused rather than
+  half-working), Web profile.
 - The official **voice input** bundle enabled (plugin manager → 语音输入). It
   provides the speech engine; without it the pill reports that no recognizer is
   mounted.

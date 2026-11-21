@@ -1,6 +1,6 @@
 {
   "name": "dsh-dictation-hotkey",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Press-to-talk dictation: a key combination records in the DSH Web page, DSH's own speech engine transcribes, and the text lands in the composer.",
   "license": "MIT",
   "type": "module",
@@ -34,7 +34,8 @@
     }
   },
   "engines": {
-    "node": "^22.19.0 || >=24.0.0"
+    "node": "^22.19.0 || >=24.0.0",
+    "dsh": ">=0.2.0-rc.2 <0.3.0"
   },
   "scripts": {
     "build": "node build.mjs",
@@ -60,10 +61,10 @@
   },
   "homepage": "https://github.com/AndyYang12345/dsh-dictation-hotkey#readme",
   "peerDependencies": {
-    "@deepseek-ai/cordis": "^4.0.4",
-    "@deepseek-ai/dsh-experimental-speech-to-text": "0.2.0-rc.2",
-    "@deepseek-ai/dsh-experimental-api-speech-to-text": "0.2.0-rc.2",
-    "@deepseek-ai/dsh-client-ui-conversation": "0.2.0-rc.2"
+    "@deepseek-ai/cordis": "~4.1.0",
+    "@deepseek-ai/dsh-experimental-speech-to-text": ">=0.2.0-rc.2 <0.3.0",
+    "@deepseek-ai/dsh-experimental-api-speech-to-text": ">=0.2.0-rc.2 <0.3.0",
+    "@deepseek-ai/dsh-client-ui-conversation": ">=0.2.0-rc.2 <0.3.0"
   },
   "devDependencies": {
     "esbuild": "^0.25.0"
